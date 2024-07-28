@@ -64,10 +64,15 @@ class AVDecisionMakingModule(MRAVTemplateMcity):
 
         AV_vel = AV_longSpeed + AV_latSpeed
         nextOrient = self.trajectory["orientation_vector"][self.trajectory_index]
-        # Check if there is a leading vehicle   
-        #for info in av_context_info.items():      
-            
 
+        prevAccelaration = 0
+
+
+        #
+        overall_Accelaration = (AV_vel+ AV_longSpeed)/0.1
+        overall_Jerk = (overall_Accelaration - prevAccelaration)/0.1
+
+        prevAccelaration = overall_Accelaration
         # Check if there is a leading vehicle and a vehicle in adjacent lane
         for info in av_context_info.items():
             if info['leading_info']['is_leading_cav']:
@@ -84,7 +89,7 @@ class AVDecisionMakingModule(MRAVTemplateMcity):
                 if LV_dist >= 15:
                     AV_vel = LV_longSpeed + LV_longSpeed
                 else:
-                    AV_vel = LV_longSpeed + LV_longSpeed - 2
+                    AV_vel = LV_longSpeed + LV_longSpeed / 0.5
 
             else:
                 is_LV = False
@@ -99,18 +104,29 @@ class AVDecisionMakingModule(MRAVTemplateMcity):
                 adj_dist = d = math.sqrt((adj_xPos - AV_xPos)**2 + (adj_yPos - AV_yPos)**2)
 
                 if adj_dist<=15:
-                    AV_vel = adj_longSpeed + adj_longSpeed - 2
+                    AV_vel = adj_longSpeed + adj_longSpeed /0.5
                 elif is_LV == True and adj_dist>=15:
                     if LV_dist >= 15:
                         AV_vel = LV_longSpeed + LV_longSpeed
                     else:
-                        AV_vel = LV_longSpeed + LV_longSpeed - 2
+                        AV_vel = LV_longSpeed + LV_longSpeed /0.5
                 elif is_LV == False:
                     AV_vel = AV_longSpeed + AV_latSpeed                
 
             else:
                 is_adj = False
             break
+
+         
+
+
+        if overall_Jerk >= 9:
+            AV_vel = AV_longSpeed + AV_latSpeed
+        elif overall_Jerk <9:
+            if overall_Accelaration >= 9:
+                AV_vel = LV_longSpeed + LV_longSpeed /0.5
+            else :
+                AV_vel = AV_longSpeed + AV_latSpeed 
 
         print("current AV position:", current_x, current_y)
         print("next AV position:", next_x, next_y)
